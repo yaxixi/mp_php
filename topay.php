@@ -6,6 +6,7 @@
     $ac = rc4("fdsas#%226", base64_decode($ac));
     $id = rc4("fdsas#%226", base64_decode($id));
 
+
     /*
      * rc4加密算法
      * $pwd 密钥
