@@ -56,6 +56,8 @@
     $precharge_info = $db->get_row("select * from precharge where orderid='$orderid'");
     if ($precharge_info)
     {
+        if ($precharge_info['status'] == 1)
+            die(json_encode(array('ret'=>-1,'msg'=>'该订单已支付')));
     }
     else
     {

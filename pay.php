@@ -47,8 +47,6 @@
 
         // 查询预充值
         global $db;
-        global $uid;
-        global $token;
         $ret = $db->get_row("select * from precharge where orderid='$orderid'");
         if ($ret)
         {
@@ -63,6 +61,7 @@
             $channel = $ret['channel'];
             $goodsname = $ret['goodsname'];
             $notify_url = $ret['notify_url'];
+            $uid = $ret['uid'];
             $time = time();
             $ret = $db->query("insert into charge (`tradeno`,`orderid`,`account`,`userid`,`orderuid`,`uid`,`channel`,`goodsname`,`price`,`notify_url`,`time`,`clientTime`) value ('$tradeno','$orderid','$account','$fromName','$orderuid','$uid','$channel','$goodsname',$money,'$notify_url',$time,'$clientTime')");
             if ($ret == 1)
@@ -70,22 +69,24 @@
                 // 更新 precharge 表的 status
                 $db->query("update precharge set status=1 where orderid='$orderid'");
 
-                // 通知商店支付成功
-                $key = strtolower(md5($orderid. $orderuid. $tradeno. $money. $token));
-                $params = array(
-                    'platform_trade_no'=>$tradeno,
-                    'orderid'=>$orderid,
-                    'price'=>(double)$money,
-                    'notify_url'=>$notify_url,
-                    'orderuid'=>$orderuid,
-                    'key'=>$key,
-                );
-                $line = SnsNetwork::makeRequest("http://localhost:9001/pay", $params, '', 'post');
-                /*if ($line['result'] && $line['msg'] == "OK")
+                $token = '';
+                $ret2 = $db->get_row("select token from vendor where uid='$uid'");
+                if ($ret2)
                 {
-                    // 通知成功，更新 charge 表状态
-                    $db->query("update charge set status=1 where tradeno='$tradeno'");
-                }*/
+                    $token = $ret2['token'];
+
+                    // 通知商店支付成功
+                    $key = strtolower(md5($orderid. $orderuid. $tradeno. $money. $token));
+                    $params = array(
+                        'platform_trade_no'=>$tradeno,
+                        'orderid'=>$orderid,
+                        'price'=>(double)$money,
+                        'notify_url'=>$notify_url,
+                        'orderuid'=>$orderuid,
+                        'key'=>$key,
+                    );
+                    $line = SnsNetwork::makeRequest("http://localhost:9001/pay", $params, '', 'post');
+                }
             }
         }
         else
