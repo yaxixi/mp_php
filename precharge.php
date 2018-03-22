@@ -148,7 +148,6 @@
                     $return['msg'] = '成功预充值';
                     $return['data'] = array(
                         'pay_url'=> $url,
-                        'account'=>$account,
                     );
                     $return['code'] = 1;
                     $return['url'] = '';
