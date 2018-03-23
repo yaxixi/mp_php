@@ -11,6 +11,8 @@
     include_once "common/ez_sql_mysql.php";
     // include_once "phpqrcode/phpqrcode.php";
 
+    $MAX_MONEY = 80000;
+
     function go_error($ret, $msg)
     {
         addLog("precharge", $msg . " " . $ret);
@@ -122,7 +124,7 @@
         else
         {
             // 验证通过，取得信息
-            $ret = $db->get_row("select account, accountid from account where uid='$uid' and status=0 order by fetch_time limit 1");
+            $ret = $db->get_row("select account, accountid from account where uid='$uid' and status=0 and money < $MAX_MONEY order by fetch_time limit 1");
             if ($ret)
             {
                 $time = time();

@@ -45,8 +45,11 @@
         $orderid = $order_info['remark'];
         $clientTime = $order_info['time'];
 
-        // 查询预充值
         global $db;
+        // 增加帐号收款金额
+        $db->query("update account set money = money + $money where account='$account'");
+
+        // 查询预充值
         $ret = $db->get_row("select * from precharge where orderid='$orderid'");
         if ($ret)
         {
