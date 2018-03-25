@@ -1,15 +1,15 @@
 <?php
 
-	/*error_reporting(E_ALL);
+/*	error_reporting(E_ALL);
     ini_set('display_errors', 'On');
     ini_set('display_startup_errors','On');
-    ini_set('error_log', dirname(__FILE__) . '/error_log.txt');*/
+    //ini_set('error_log', dirname(__FILE__) . '/error_log.txt');*/
 
     error_reporting(0);
 
     include_once "common/log.php";
     include_once "common/ez_sql_mysql.php";
-    // include_once "phpqrcode/phpqrcode.php";
+    //include_once "phpqrcode/phpqrcode.php";
 
     $MAX_MONEY = 80000;
 
@@ -17,6 +17,13 @@
     {
         addLog("precharge", $msg . " " . $ret);
         die($ret);
+    }
+
+    function get_trade_no()
+    {
+        $yCode = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q');
+        $orderSn = $yCode[intval(date('Y')) - 2017] . strtoupper(dechex(date('m'))) . date('d') . substr(time(), -5) . substr(microtime(), 2, 5) . sprintf('%02d', rand(0, 999999));
+        return $orderSn;
     }
 
     /*
@@ -80,6 +87,8 @@
     else
         $return_url = "";
     $goodsname = $_REQUEST["goodsname"];
+    $cashier_account = $_REQUEST['cashier_account'];
+    $need_qrcode = $_REQUEST['need_qrcode'];
     $key = $_REQUEST["key"];
     $token = '';
 
@@ -124,15 +133,19 @@
         else
         {
             // 验证通过，取得信息
-            $ret = $db->get_row("select account, accountid from account where uid='$uid' and status=0 and money < $MAX_MONEY order by fetch_time limit 1");
+            if ($need_qrcode && $cashier_account && $cashier_account != "")
+                $ret = $db->get_row("select account, accountid from account where account='$cashier_account' limit 1");
+            else
+                $ret = $db->get_row("select account, accountid from account where uid='$uid' and status=0 and money < $MAX_MONEY order by fetch_time limit 1");
             if ($ret)
             {
+                $tradeno = get_trade_no();
                 $time = time();
                 $account = $ret['account'];
                 $accountid = $ret['accountid'];
                 $price = (double)$price;
                 // 插入预充值表
-                $ret = $db->query("insert into precharge (`orderid`,`orderuid`,`account`,`uid`,`channel`,`price`,`time`,`notify_url`,`return_url`,`goodsname`) value ('$orderid','$orderuid','$account','$uid','$channel',$price,$time,'$notify_url','$return_url','$goodsname')");
+                $ret = $db->query("insert into precharge (`orderid`,`tradeno`,`orderuid`,`account`,`uid`,`channel`,`price`,`time`,`notify_url`,`return_url`,`goodsname`) value ('$orderid','$tradeno','$orderuid','$account','$uid','$channel',$price,$time,'$notify_url','$return_url','$goodsname')");
                 if (is_int($ret) && $ret == 1)
                 {
                     // 更新该帐号的获取时间
@@ -141,12 +154,17 @@
                     $db->disconnect();
 
                     $crypt_accountid = urlencode(base64_encode(rc4("fdsas#%226", $accountid)));
-                    $crypt_orderid = urlencode(base64_encode(rc4("fdsas#%226", $orderid)));
+                    $crypt_orderid = urlencode(base64_encode(rc4("fdsas#%226", $tradeno)));
                     $url = "http://mpay.yituozhifu.com/topay.php?ac=". $crypt_accountid. "&id=". $crypt_orderid;
-                    /*ob_start();
-                    QRcode::png($url);
-                    $img_bytes = base64_encode(ob_get_contents());
-                    ob_end_clean();*/
+                    /*
+                    if ($need_qrcode)
+                    {
+                        ob_start();
+                        QRcode::png($url);
+                        $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
+                        ob_end_clean();
+                    }*/
+
                     $return['msg'] = '成功预充值';
                     $return['data'] = array(
                         'pay_url'=> $url,

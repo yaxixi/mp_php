@@ -46,19 +46,20 @@
         $clientTime = $order_info['time'];
 
         global $db;
-        // 增加帐号收款金额
-        $db->query("update account set money = money + $money where account='$account'");
 
         // 查询预充值
-        $ret = $db->get_row("select * from precharge where orderid='$orderid'");
+        $ret = $db->get_row("select * from precharge where tradeno='$orderid'");
         if ($ret)
         {
             if ((int)$ret['status'] != 0)
                 // 该订单已处理
                 return;
 
+            // 增加帐号收款金额
+            $db->query("update account set money = money + $money where account='$account'");
+
             // 插入
-            $tradeno = get_trade_no();
+            $tradeno = $ret['tradeno'];
             $orderuid = $ret['orderuid'];
             $orderid = $ret['orderid'];
             $channel = $ret['channel'];
@@ -94,8 +95,9 @@
         }
         else
         {
+            $keyId = strtolower(md5($fromName. $account. $orderid. $money. $clientTime));
             // 找不到该订单，记录充值异常表
-            $db->query("insert into charge_exception (`userid`,`account`,`remark`,`price`,`clientTime`) value ('$fromName','$account','$orderid', $money, '$clientTime')");
+            $db->query("insert into charge_exception (`keyId`, `userid`,`account`,`remark`,`price`,`clientTime`) value ('$keyId', '$fromName','$account','$orderid', $money, '$clientTime')");
         }
     }
 
