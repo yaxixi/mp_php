@@ -44,9 +44,24 @@
         die(json_encode(array('ret'=>0,'msg'=>'OK')));
     }
 
+    function charge_exception_count()
+    {
+        global $db;
+        $clientTime = date("Y-m-d");
+        $ret = $db->get_row("select count(*) as num from charge_exception where status=0 and clientTime like '$clientTime%'");
+        if ($ret)
+        {
+            die(json_encode(array('ret'=>0,'count'=>$ret['num'])));
+        }
+        else
+            die(json_encode(array('ret'=>-1,'msg'=>'db fail')));
+    }
+
     $func = $_REQUEST["func"];
     if ($func == "switch_account_status")
         switch_account_status();
     else if ($func == "return_money")
         return_money();
+    else if ($func == "charge_exception_count")
+        charge_exception_count();
 ?>
