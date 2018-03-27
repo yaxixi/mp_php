@@ -56,6 +56,7 @@
                 return;
 
             // 增加帐号收款金额
+            $account = $ret['account'];
             $db->query("update account set money = money + $money where account='$account'");
 
             // 插入

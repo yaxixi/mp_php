@@ -53,7 +53,7 @@
         die(json_encode(array('ret'=>-1,'msg'=>'uid无效:'.$uid)));
     }
 
-    $precharge_info = $db->get_row("select * from precharge where orderid='$orderid'");
+    $precharge_info = $db->get_row("select * from precharge where tradeno='$orderid'");
     if ($precharge_info)
     {
         if ($precharge_info['status'] == 1)
