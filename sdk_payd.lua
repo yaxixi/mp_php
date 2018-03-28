@@ -90,7 +90,22 @@ local function timer_handle()
 
                     local post_str = generate_post_string(post_data);
                     local ret = HTTP_CLIENT_D.post_crt(notify_url, post_str);
+                    local flag;
                     if ret == "OK" then
+                        flag = true;
+                    else
+                        local response = json_decode(ret);
+                        if response and response['code'] == 0 and
+                            price >= to_int(tonumber(response['price'])) then
+                            price = to_int(tonumber(response['price']));
+                            flag = true;
+
+                            sql_cmd = string.format("update charge set real_price=%s where tradeno='%s'", price, tradeno);
+                            DB_D.execute_db_crt(db_name, sql_cmd);
+                        end
+                    end
+
+                    if flag then
                         -- 通知成功，更新数据库
                         sql_cmd = string.format("update charge set status=1 where tradeno='%s'", tradeno);
                         DB_D.execute_db_crt(db_name, sql_cmd);
