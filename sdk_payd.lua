@@ -33,7 +33,7 @@ local function recv_pay_notify(para_list)
         local price = to_int(tonumber(para_list['price']));
         if response and response['code'] == 0 and
             price >= to_int(tonumber(response['price'])) then
-            price = to_int(tonumber(response['price']));
+            price = response['price'];
             flag = true;
 
             sql_cmd = string.format("update charge set real_price=%s where tradeno='%s'", price, platform_trade_no);
@@ -115,7 +115,7 @@ local function timer_handle()
                         local response = json_decode(ret);
                         if response and response['code'] == 0 and
                             to_int(tonumber(price)) >= to_int(tonumber(response['price'])) then
-                            to_int(tonumber(price)) = to_int(tonumber(response['price']));
+                            price = response['price'];
                             flag = true;
 
                             sql_cmd = string.format("update charge set real_price=%s where tradeno='%s'", price, tradeno);
