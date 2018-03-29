@@ -114,15 +114,15 @@ function test_precharge()
     end)]]
     CRT_D.xpcall(function()
         local post_data = {
-            orderid = NEW_RID(),
-            orderuid = 'testuser',
-            uid = 4,
+            orderid = '20180329140519',
+            orderuid = 'cs',
+            uid = 17,
             istype = 1,
-            notify_url = 'http://www.axixi.top/paynotify.php',
-            goodsname = 'testgoods',
+            notify_url = 'http://www.demo.com/paynotify.php',
+            goodsname = 'phone',
         };
         local token = 'ef651247869e491bb61585697f845329';
-        local str = string.format("%s%s%s%s%s%s%s", "testgoods", 1, 'http://www.axixi.top/paynotify.php', post_data.orderid, "testuser", token, 4);
+        local str = string.format("%s%s%s%s%s%s%s", "phone", 1, 'http://www.axixi.top/paynotify.php', post_data.orderid, "testuser", token, 4);
         local key = md5.sumhexa(str);
         post_data.key = key;
         local post_str = generate_post_string(post_data);
