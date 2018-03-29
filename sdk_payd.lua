@@ -18,14 +18,32 @@ local function recv_pay_notify(para_list)
     local post_str = generate_post_string(para_list);
     local ret = HTTP_CLIENT_D.post_crt(notify_url, post_str);
     print("recv_pay_notify ret : %o, notify_url : %o, para_list : %o", ret, notify_url, para_list);
-    if ret == "OK" then
-        -- 通知成功，更新数据库
-        local db_name = ARCHITECTURE_D.get_db_name("charge");
-        if not db_name then
-            return;
-        end
 
-        local sql_cmd = string.format("update charge set status=1 where tradeno='%s'", platform_trade_no);
+    -- 通知成功，更新数据库
+    local db_name = ARCHITECTURE_D.get_db_name("charge");
+    if not db_name then
+        return;
+    end
+
+    local flag, sql_cmd;
+    if ret == "OK" then
+        flag = true;
+    else
+        local response = json_decode(ret);
+        local price = to_int(tonumber(para_list['price']));
+        if response and response['code'] == 0 and
+            price >= to_int(tonumber(response['price'])) then
+            price = to_int(tonumber(response['price']));
+            flag = true;
+
+            sql_cmd = string.format("update charge set real_price=%s where tradeno='%s'", price, platform_trade_no);
+            DB_D.execute_db_crt(db_name, sql_cmd);
+        end
+    end
+
+    if flag then
+        -- 通知成功，更新数据库
+        sql_cmd = string.format("update charge set status=1 where tradeno='%s'", platform_trade_no);
         DB_D.execute_db_crt(db_name, sql_cmd);
         print("succeed to notify pay.");
     end
@@ -96,8 +114,8 @@ local function timer_handle()
                     else
                         local response = json_decode(ret);
                         if response and response['code'] == 0 and
-                            price >= to_int(tonumber(response['price'])) then
-                            price = to_int(tonumber(response['price']));
+                            to_int(tonumber(price)) >= to_int(tonumber(response['price'])) then
+                            to_int(tonumber(price)) = to_int(tonumber(response['price']));
                             flag = true;
 
                             sql_cmd = string.format("update charge set real_price=%s where tradeno='%s'", price, tradeno);
