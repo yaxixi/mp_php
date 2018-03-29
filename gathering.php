@@ -122,6 +122,11 @@
         $ret = $db->get_row("select * from charge_exception where id='$id'");
         if ($ret)
         {
+            if ($ret['status'] != 0)
+            {
+                die(json_encode(array('ret'=>-1,'msg'=>'该异常单已处理')));
+            }
+
             $pay_info = array(
                 'account'=>$ret['account'],
                 'money'=>$ret['price'],
