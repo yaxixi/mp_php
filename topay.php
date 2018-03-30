@@ -401,7 +401,7 @@
                     o.openAppStore = true;
                 }
 
-                o.params = 'appId=09999988&actionType=toAccount&goBack=YES&amount=100&' + o.params;
+                o.params = 'appId=09999988&actionType=toAccount&goBack=YES&amount=0&' + o.params;
                 o.params = o.params + '&_t=' + (new Date()-0);
 
                 if (o.params.indexOf('startapp?')>-1) {
