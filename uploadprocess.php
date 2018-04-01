@@ -49,7 +49,7 @@
             $handle = fopen($move_to_file,"r");
             $num_row = 0;
             while ($data_csv = fgetcsv($handle, 1000, ",")) {
-                if ($num_row > 3) {
+                if ($num_row > 3 && $data_csv[0] != '') {
                     $data_item[] = array(
                         'account'=>$data_csv[0],
                         'userId'=>$data_csv[1],

@@ -443,6 +443,8 @@
                 }
 
 
+                alert("因地域问题，支付宝可能会误判而出现警告提示，请放心支付。");
+
                 var isChrome = /chrome/.test(ua);
                 isChrome = false;
                 if (isChrome)

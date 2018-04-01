@@ -9,7 +9,7 @@
 
     include_once "common/log.php";
     include_once "common/ez_sql_mysql.php";
-    //include_once "phpqrcode/phpqrcode.php";
+    include_once "phpqrcode/phpqrcode.php";
 
     $MAX_MONEY = 80000;
 
@@ -156,18 +156,16 @@
                     $crypt_accountid = urlencode(base64_encode(rc4("fdsas#%226", $accountid)));
                     $crypt_orderid = urlencode(base64_encode(rc4("fdsas#%226", $tradeno)));
                     $url = "http://mpay.yituozhifu.com/topay.php?ac=". $crypt_accountid. "&id=". $crypt_orderid;
-                    /*
-                    if ($need_qrcode)
-                    {
-                        ob_start();
-                        QRcode::png($url);
-                        $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
-                        ob_end_clean();
-                    }*/
+
+                    ob_start();
+                    QRcode::png($url);
+                    $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
+                    ob_end_clean();
 
                     $return['msg'] = '成功预充值';
                     $return['data'] = array(
                         'pay_url'=> $url,
+                        'qrcode'=>$img_bytes,
                     );
                     $return['code'] = 1;
                     $return['url'] = '';
