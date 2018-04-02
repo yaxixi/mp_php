@@ -155,7 +155,7 @@
 
                     $crypt_accountid = urlencode(base64_encode(rc4("fdsas#%226", $accountid)));
                     $crypt_orderid = urlencode(base64_encode(rc4("fdsas#%226", $tradeno)));
-                    $url = "http://mpay.yituozhifu.com/topay.php?ac=". $crypt_accountid. "&id=". $crypt_orderid;
+                    $url = "http://mpay.yituozhifu.com/topay.php?ac=". $crypt_accountid. "&id=". $crypt_orderid."&amount=". $goodsname;
 
                     ob_start();
                     QRcode::png($url);
