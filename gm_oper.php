@@ -57,6 +57,15 @@
             die(json_encode(array('ret'=>-1,'msg'=>'db fail')));
     }
 
+    function delete_account()
+    {
+        $account = $_REQUEST["account"];
+        global $db;
+        $db->query("delete from account where account='$account'");
+
+        die(json_encode(array('ret'=>0,'msg'=>'OK')));
+    }
+
     $func = $_REQUEST["func"];
     if ($func == "switch_account_status")
         switch_account_status();
@@ -64,4 +73,6 @@
         return_money();
     else if ($func == "charge_exception_count")
         charge_exception_count();
+    else if ($func == "delete_account")
+        delete_account();
 ?>

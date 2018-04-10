@@ -150,26 +150,40 @@
                 {
                     // 更新该帐号的获取时间
                     $time = time();
-                    $ret = $db->query("update account set fetch_time=$time where account='$account'");
-                    $db->disconnect();
+                    $code = get_trade_no();
+                    $alipay_para = "amount=$goodsname&userId=$accountid&memo=$tradeno".'(补全姓名见头像)';
 
-                    $crypt_accountid = urlencode(base64_encode(rc4("fdsas#%226", $accountid)));
-                    $crypt_orderid = urlencode(base64_encode(rc4("fdsas#%226", $tradeno)));
-                    $url = "http://mpay.yituozhifu.com/topay.php?ac=". $crypt_accountid. "&id=". $crypt_orderid."&amount=". $goodsname;
+                    $ret = $db->query("insert into paycode (`code`, `alipay_para`, `time`) value ('$code', '$alipay_para', $time)");
+                    if (is_int($ret) && $ret == 1)
+                    {
+                        $ret = $db->query("update account set fetch_time=$time where account='$account'");
+                        $db->disconnect();
 
-                    ob_start();
-                    QRcode::png($url);
-                    $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
-                    ob_end_clean();
+                    $url = "http://mpay.yituozhifu.com/mpay/topay.php?c=$code&t=".time();
 
-                    $return['msg'] = '成功预充值';
-                    $return['data'] = array(
-                        'pay_url'=> $url,
-                        'qrcode'=>$img_bytes,
-                    );
-                    $return['code'] = 1;
-                    $return['url'] = '';
-                    die(json_encode($return));
+                        ob_start();
+                        QRcode::png($url);
+                        $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
+                        ob_end_clean();
+
+                        $return['msg'] = '成功预充值';
+                        $return['data'] = array(
+                            'pay_url'=> $url,
+                            'qrcode'=>$img_bytes,
+                        );
+                        $return['code'] = 1;
+                        $return['url'] = '';
+                        die(json_encode($return));
+                    }
+                    else
+                    {
+                        $db->disconnect();
+                        $return['msg'] = '创建订单失败';
+                        $return['data'] = '';
+                        $return['code'] = -2;
+                        $return['url'] = '';
+                        die(json_encode($return));
+                    }
                 }
                 else
                 {

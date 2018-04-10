@@ -1,39 +1,63 @@
 <?php
 
-    include_once "common/log.php";
-    include_once "common/ez_sql_mysql.php";
+/*	error_reporting(E_ALL);
+    ini_set('display_errors', 'On');
+ini_set('display_startup_errors','On');*/
+    error_reporting(0);
 
-    $code = $_REQUEST['c'];
+    $ac = $_REQUEST['ac'];
+    $id = $_REQUEST['id'];
+    $amount = (float)$_REQUEST['amount'];
     $time = (int)$_REQUEST['t'];
     $is_valid = 1;
     if (time() - $time >= 300)
         $is_valid = 0;
 
-    function go_error($ret, $msg)
-    {
-        addLog("topay", $msg . " " . $ret);
-        die($ret);
-    }
+    $ac = rc4("fdsas#%226", base64_decode($ac));
+    $id = rc4("fdsas#%226", base64_decode($id));
 
-    $db = ezSQL_mysql::get_db("mpay");
-    if (!$db)
-    {
-        go_error('地址跳转异常', "fail to connect dbasebase");
-    }
 
-    $code = $db->escape($code);
-    $ret = $db->get_row("select alipay_para, time from paycode where code='$code'");
-    $db->disconnect();
-    $alipay_para = '';
-    if ($ret)
+    /*
+     * rc4加密算法
+     * $pwd 密钥
+     * $data 要加密的数据
+     */
+    function rc4 ($pwd, $data)//$pwd密钥 $data需加密字符串
     {
-        if (time() - (int)$ret['time'] >= 300)
-            $is_valid = 0;
-        $alipay_para = $ret['alipay_para'];
-    }
-    else
-    {
-        die('跳转异常');
+        $key[] ="";
+        $box[] ="";
+
+        $pwd_length = strlen($pwd);
+        $data_length = strlen($data);
+
+        for ($i = 0; $i < 256; $i++)
+        {
+            $key[$i] = ord($pwd[$i % $pwd_length]);
+            $box[$i] = $i;
+        }
+
+        for ($j = $i = 0; $i < 256; $i++)
+        {
+            $j = ($j + $box[$i] + $key[$i]) % 256;
+            $tmp = $box[$i];
+            $box[$i] = $box[$j];
+            $box[$j] = $tmp;
+        }
+
+        for ($a = $j = $i = 0; $i < $data_length; $i++)
+        {
+            $a = ($a + 1) % 256;
+            $j = ($j + $box[$a]) % 256;
+
+            $tmp = $box[$a];
+            $box[$a] = $box[$j];
+            $box[$j] = $tmp;
+
+            $k = $box[(($box[$a] + $box[$j]) % 256)];
+            $cipher .= chr(ord($data[$i]) ^ $k);
+        }
+
+        return $cipher;
     }
 
     echo <<<HTML
@@ -63,7 +87,7 @@
           }
         }
 
-        var alipays_url = 'alipays://platformapi/startapp?appId=09999988&actionType=toAccount&goBack=YES&$alipay_para';
+        var alipays_url = 'alipays://platformapi/startapp?appId=09999988&actionType=toAccount&goBack=YES&amount='.$amount.'&userId='.$ac.'&memo='.$id;
 
         addLoadEvent(function() {
             if ($is_valid == 0)
