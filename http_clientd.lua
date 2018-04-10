@@ -68,7 +68,7 @@ function post_crt(url, post_data)
     end
 end
 
-function get_crt(url, header_list)
+function get_crt(url)
     local cookie = new_cookie();
     local record = {
                      url          = url,

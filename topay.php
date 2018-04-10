@@ -3,11 +3,22 @@
     include_once "common/log.php";
     include_once "common/ez_sql_mysql.php";
 
+    $err = (int)$_REQUEST['e'];
     $code = $_REQUEST['c'];
     $time = (int)$_REQUEST['t'];
     $is_valid = 1;
     if (time() - $time >= 300)
         $is_valid = 0;
+
+    if ($is_valid == 0)
+    {
+        die('该链接已失效');
+    }
+
+    if ($err == 1)
+    {
+        die('通道维护中');
+    }
 
     function go_error($ret, $msg)
     {

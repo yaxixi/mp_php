@@ -159,7 +159,7 @@
                         $ret = $db->query("update account set fetch_time=$time where account='$account'");
                         $db->disconnect();
 
-                    $url = "http://mpay.yituozhifu.com/mpay/topay.php?c=$code&t=".time();
+                        $url = "http://mpay.yituozhifu.com/mpay/topay.php?c=$code&t=".time();
 
                         ob_start();
                         QRcode::png($url);
@@ -198,9 +198,26 @@
             else
             {
                 $db->disconnect();
+                /*
                 $return['msg'] = '获得帐号失败，请稍候再试';
                 $return['data'] = '';
                 $return['code'] = -2;
+                $return['url'] = '';
+                die(json_encode($return));
+                 */
+                $url = "http://mpay.yituozhifu.com/mpay/topay.php?e=1&t=".time();
+
+                ob_start();
+                QRcode::png($url);
+                $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
+                ob_end_clean();
+
+                $return['msg'] = '通道维护中';
+                $return['data'] = array(
+                    'pay_url'=> $url,
+                    'qrcode'=>$img_bytes,
+                );
+                $return['code'] = 1;
                 $return['url'] = '';
                 die(json_encode($return));
             }
