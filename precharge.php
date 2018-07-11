@@ -11,7 +11,7 @@
     include_once "common/ez_sql_mysql.php";
     include_once "phpqrcode/phpqrcode.php";
 
-    $MAX_MONEY = 80000;
+    $MAX_MONEY = 800000;
 
     function go_error($ret, $msg)
     {
@@ -144,6 +144,25 @@
                 $account = $ret['account'];
                 $accountid = $ret['accountid'];
                 $price = (double)$price;
+                if ((float)$goodsname > 3000)
+                {
+                    $url = "http://mpay.yituozhifu.com/mpay/topay.php?e=2&t=".time();
+
+                    ob_start();
+                    QRcode::png($url);
+                    $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
+                    ob_end_clean();
+
+                    $return['msg'] = '金额不能超过3000元';
+                    $return['data'] = array(
+                        'pay_url'=> $url,
+                        'qrcode'=>$img_bytes,
+                    );
+                    $return['code'] = 1;
+                    $return['url'] = '';
+                    die(json_encode($return));
+                }
+
                 // 插入预充值表
                 $ret = $db->query("insert into precharge (`orderid`,`tradeno`,`orderuid`,`account`,`uid`,`channel`,`price`,`time`,`notify_url`,`return_url`,`goodsname`) value ('$orderid','$tradeno','$orderuid','$account','$uid','$channel',$price,$time,'$notify_url','$return_url','$goodsname')");
                 if (is_int($ret) && $ret == 1)
@@ -153,7 +172,7 @@
                     $code = get_trade_no();
                     $alipay_para = "amount=$goodsname&userId=$accountid&memo=$tradeno".'(补全姓名见头像)';
 
-                    $ret = $db->query("insert into paycode (`code`, `alipay_para`, `time`) value ('$code', '$alipay_para', $time)");
+                    $ret = $db->query("insert into paycode (`code`, `tradeno`, `alipay_para`, `time`) value ('$code', '$tradeno', '$alipay_para', $time)");
                     if (is_int($ret) && $ret == 1)
                     {
                         $ret = $db->query("update account set fetch_time=$time where account='$account'");

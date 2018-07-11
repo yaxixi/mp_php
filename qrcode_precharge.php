@@ -87,8 +87,6 @@
     else
         $return_url = "";
     $goodsname = $_REQUEST["goodsname"];
-    $cashier_account = $_REQUEST['cashier_account'];
-    $need_qrcode = $_REQUEST['need_qrcode'];
     $key = $_REQUEST["key"];
     $token = '';
 
@@ -133,57 +131,35 @@
         else
         {
             // 验证通过，取得信息
-            if ($need_qrcode && $cashier_account && $cashier_account != "")
-                $ret = $db->get_row("select account, accountid from account where account='$cashier_account' limit 1");
-            else
-                $ret = $db->get_row("select account, accountid from account where uid='$uid' and status=0 and money < $MAX_MONEY order by fetch_time limit 1");
+            $money = (float)$goodsname;
+            $money2 = $money + 0.1;
+            $fetch_time = time() - 300;
+            $ret = $db->get_row("select id, account, qrcode, money from account where uid='$uid' and status=0 and money >= $money and money <= $money2 and fetch_time < $fetch_time order by fetch_time limit 1");
             if ($ret)
             {
                 $tradeno = get_trade_no();
                 $time = time();
+                $qrcode = $ret['qrcode'];
+                $money = $ret['money'];
                 $account = $ret['account'];
-                $accountid = $ret['accountid'];
-                $price = (double)$price;
+                $id = $ret['id'];
+
                 // 插入预充值表
-                $ret = $db->query("insert into precharge (`orderid`,`tradeno`,`orderuid`,`account`,`uid`,`channel`,`price`,`time`,`notify_url`,`return_url`,`goodsname`) value ('$orderid','$tradeno','$orderuid','$account','$uid','$channel',$price,$time,'$notify_url','$return_url','$goodsname')");
+                $ret = $db->query("insert into precharge (`orderid`,`tradeno`,`orderuid`,`uid`,`account`,`channel`,`price`,`time`,`notify_url`,`return_url`,`goodsname`) value ('$orderid','$tradeno','$orderuid','$uid','$account','$channel',$money,$time,'$notify_url','$return_url','$goodsname')");
                 if (is_int($ret) && $ret == 1)
                 {
                     // 更新该帐号的获取时间
                     $time = time();
-                    $code = get_trade_no();
-                    $alipay_para = "amount=$goodsname&userId=$accountid&memo=$tradeno".'(补全姓名见头像)';
+                    $ret = $db->query("update account set fetch_time=$time where id='$id'");
+                    $db->disconnect();
 
-                    $ret = $db->query("insert into paycode (`code`, `alipay_para`, `time`) value ('$code', '$alipay_para', $time)");
-                    if (is_int($ret) && $ret == 1)
-                    {
-                        $ret = $db->query("update account set fetch_time=$time where account='$account'");
-                        $db->disconnect();
-
-                        $url = "http://b.yituozhifu.com/mpay/topay.php?c=$code&t=".time();
-
-                        ob_start();
-                        QRcode::png($url);
-                        $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
-                        ob_end_clean();
-
-                        $return['msg'] = '成功预充值';
-                        $return['data'] = array(
-                            'pay_url'=> $url,
-                            'qrcode'=>$img_bytes,
-                        );
-                        $return['code'] = 1;
-                        $return['url'] = '';
-                        die(json_encode($return));
-                    }
-                    else
-                    {
-                        $db->disconnect();
-                        $return['msg'] = '创建订单失败';
-                        $return['data'] = '';
-                        $return['code'] = -2;
-                        $return['url'] = '';
-                        die(json_encode($return));
-                    }
+                    $return['msg'] = '成功预充值';
+                    $return['data'] = array(
+                        'qrcode'=>$qrcode,
+                    );
+                    $return['code'] = 1;
+                    $return['url'] = '';
+                    die(json_encode($return));
                 }
                 else
                 {
@@ -198,9 +174,25 @@
             else
             {
                 $db->disconnect();
+                /*
                 $return['msg'] = '获得帐号失败，请稍候再试';
                 $return['data'] = '';
                 $return['code'] = -2;
+                $return['url'] = '';
+                die(json_encode($return));
+                 */
+                $url = "http://mpay.yituozhifu.com/mpay/topay.php?e=1&t=".time();
+
+                ob_start();
+                QRcode::png($url);
+                $img_bytes = 'data:image/png;base64,' . base64_encode(ob_get_contents());
+                ob_end_clean();
+
+                $return['msg'] = '订单获取失败';
+                $return['data'] = array(
+                    'qrcode'=>$img_bytes,
+                );
+                $return['code'] = 1;
                 $return['url'] = '';
                 die(json_encode($return));
             }

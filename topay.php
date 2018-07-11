@@ -19,6 +19,10 @@
     {
         die('通道维护中');
     }
+    else if ($err == 2)
+    {
+        die('单次充值金额不能超过3000元');
+    }
 
     function go_error($ret, $msg)
     {

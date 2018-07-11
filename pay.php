@@ -72,8 +72,8 @@
 
                 return;
             }
-            if ((int)$ret['orderuid'] == 43)
-            {
+            //if ((int)$ret['orderuid'] == 43 || (int)$ret['orderuid'] == 53 || (int)$ret['orderuid'] == 55)
+           // {
                 // 该下游需要比对金额，不匹配当作异常单
                 $order_price = round((float)$ret['goodsname'], 2);
                 $price = round((float)$money, 2);
@@ -84,11 +84,12 @@
                     $db->query("insert into charge_exception (`keyId`, `userid`,`account`,`remark`,`price`,`clientTime`) value ('$keyId', '$fromName','$account','$remark', $money, '$clientTime')");
                     return;
                 }
-            }
+          //  }
 
             // 增加帐号收款金额
             $account = $ret['account'];
             $db->query("update account set money = money + $money where account='$account'");
+            $db->query("update account set status = 1 where account='$account' and money >= max_money");
 
             // 插入
             $tradeno = $ret['tradeno'];
@@ -104,6 +105,9 @@
             {
                 // 更新 precharge 表的 status
                 $db->query("update precharge set status=1 where orderid='$orderid'");
+
+                // 更新 paycode 表的 time
+                $db->query("update paycode set time=0 where tradeno='$tradeno'");
 
                 $token = '';
                 $ret2 = $db->get_row("select token from vendor where uid='$uid'");

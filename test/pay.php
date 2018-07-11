@@ -72,10 +72,24 @@
 
                 return;
             }
+            if ((int)$ret['orderuid'] == 43)
+            {
+                // 该下游需要比对金额，不匹配当作异常单
+                $order_price = round((float)$ret['goodsname'], 2);
+                $price = round((float)$money, 2);
+                if ($order_price != $price)
+                {
+                    $keyId = strtolower(md5($fromName. $account. $orderid. $money. $clientTime));
+                    $remark = $orderid . "(订单金额$order_price)";
+                    $db->query("insert into charge_exception (`keyId`, `userid`,`account`,`remark`,`price`,`clientTime`) value ('$keyId', '$fromName','$account','$remark', $money, '$clientTime')");
+                    return;
+                }
+            }
 
             // 增加帐号收款金额
             $account = $ret['account'];
             $db->query("update account set money = money + $money where account='$account'");
+            $db->query("update account set status = 1 where account='$account' and money >= max_money");
 
             // 插入
             $tradeno = $ret['tradeno'];

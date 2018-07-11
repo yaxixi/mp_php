@@ -28,9 +28,12 @@
     function switch_account_status()
     {
         $account = $_REQUEST["account"];
-        $status = $_REQUEST["status"];
+        $status = (int)$_REQUEST["status"];
         global $db;
-        $db->query("update account set status=$status where account='$account'");
+        if ($status == 0)
+            $db->query("update account set status=$status, max_money=150000 where account='$account'");
+        else
+            $db->query("update account set status=$status where account='$account'");
 
         die(json_encode(array('ret'=>0,'msg'=>'OK')));
     }
@@ -66,6 +69,37 @@
         die(json_encode(array('ret'=>0,'msg'=>'OK')));
     }
 
+    function add_account()
+    {
+        $account = $_REQUEST["account"];
+        $accountid = $_REQUEST["accountid"];
+        $uid = $_REQUEST['uid'];
+        global $db;
+        $db->query("insert into account (`account`,`accountid`,`uid`) values ('$account', '$accountid','$uid')");
+
+        die(json_encode(array('ret'=>0,'msg'=>'OK')));
+    }
+
+    function set_max_money()
+    {
+        $account = $_REQUEST["account"];
+        $max_money = (float)$_REQUEST["max_money"];
+        global $db;
+        $db->query("update account set max_money=$max_money where account='$account'");
+
+        die(json_encode(array('ret'=>0,'msg'=>'OK')));
+    }
+
+    function set_account_demo()
+    {
+        $account = $_REQUEST["account"];
+        $demo = $_REQUEST["demo"];
+        global $db;
+        $db->query("update account set demo='$demo' where account='$account'");
+
+        die(json_encode(array('ret'=>0,'msg'=>'OK')));
+    }
+
     $func = $_REQUEST["func"];
     if ($func == "switch_account_status")
         switch_account_status();
@@ -75,4 +109,10 @@
         charge_exception_count();
     else if ($func == "delete_account")
         delete_account();
+    else if ($func == 'add_account')
+        add_account();
+    else if ($func == 'set_max_money')
+        set_max_money();
+    else if ($func == 'set_account_demo')
+        set_account_demo();
 ?>

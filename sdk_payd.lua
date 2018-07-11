@@ -8,9 +8,14 @@ declare_module(L_SDK_PAY_D, "SDK_PAY_D");
 
 local timer_id = -1;
 local cur_date;
+local RATE = 0.001235;
+local BALANCE_LIMIT = -50000;
+local balance_enabled = false;
+local balance_status = 0;
 
 local function recv_pay_notify(para_list)
     local platform_trade_no = para_list.platform_trade_no;
+    local charge_price = to_int(tonumber(para_list['price']));
     local notify_url = url_decode(para_list.notify_url);
     para_list.notify_url = nil;
 
@@ -46,6 +51,11 @@ local function recv_pay_notify(para_list)
         sql_cmd = string.format("update charge set status=1 where tradeno='%s'", platform_trade_no);
         DB_D.execute_db_crt(db_name, sql_cmd);
         print("succeed to notify pay.");
+
+        local value = charge_price * RATE;
+        sql_cmd = string.format("update vendor set balance=balance-%s where uid='A9D9113YR003'", value);
+        DB_D.execute_db_crt(db_name, sql_cmd);
+        print("succeed to update vendor balance.");
     end
 end
 
@@ -76,7 +86,7 @@ local function timer_handle()
             return;
         end
 
-        local sql_cmd = "select tradeno, orderid, orderuid, price, uid, notify_url from charge where status = 0 limit 20";
+        local sql_cmd = string.format("select tradeno, orderid, orderuid, price, uid, notify_url from charge where status = 0 and time<=%d limit 20", os.time()-60);
         local ret, result_list = DB_D.read_db_crt(db_name, sql_cmd);
         if type(ret) == "string" then
             print("sdk_payd error : %o\n", ret);
@@ -115,10 +125,10 @@ local function timer_handle()
                         local response = json_decode(ret);
                         if response and response['code'] == 0 and
                             to_int(tonumber(price)) >= to_int(tonumber(response['price'])) then
-                            price = response['price'];
+                            local real_price = response['price'];
                             flag = true;
 
-                            sql_cmd = string.format("update charge set real_price=%s where tradeno='%s'", price, tradeno);
+                            sql_cmd = string.format("update charge set real_price=%s where tradeno='%s'", real_price, tradeno);
                             DB_D.execute_db_crt(db_name, sql_cmd);
                         end
                     end
@@ -128,6 +138,11 @@ local function timer_handle()
                         sql_cmd = string.format("update charge set status=1 where tradeno='%s'", tradeno);
                         DB_D.execute_db_crt(db_name, sql_cmd);
                         print("succeed to re-notify pay.");
+
+                        local value = to_int(tonumber(price)) * RATE;
+                        sql_cmd = string.format("update vendor set balance=balance-%s where uid='A9D9113YR003'", value);
+                        DB_D.execute_db_crt(db_name, sql_cmd);
+                        print("succeed to re-update vendor balance.");
                     end
                 end
             end
@@ -147,8 +162,45 @@ local function timer_handle()
 
             DB_D.execute_db(db_name, "update account set money = 0");
             cur_date = os.date("!%Y%m%d", os.time() + 28800);
+
+            add_balance(0);
         end
     end
+end
+
+function add_balance(value)
+    value = value or 0;
+    local db_name = ARCHITECTURE_D.get_db_name("account");
+    if not db_name then
+        return;
+    end
+
+    local sql_cmd = string.format("update vendor set balance=balance+%s where uid='A9D9113YR003'", value);
+    DB_D.execute_db(db_name, sql_cmd);
+
+    DB_D.read_db(db_name, "select balance from vendor where uid='A9D9113YR003'",
+        function(ret, result_list)
+            if (result_list and result_list[1]) then
+                local balance = to_int(tonumber(result_list[1].balance));
+                if (balance < BALANCE_LIMIT) then
+                    balance_status = -1;
+                else
+                    balance_status = 0;
+                end
+            end
+        end)
+end
+
+function set_enabled(flag)
+    balance_enabled = flag;
+end
+
+function set_balance_limit(value)
+    BALANCE_LIMIT = value;
+end
+
+function set_rate(value)
+    RATE = value;
 end
 
 function destruct()

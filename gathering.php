@@ -112,7 +112,7 @@
             'money'=>$price,
             'remark'=>$orderid,
             'fromName'=>'system',
-            'time'=>date("Y/m/d h/i"),
+            'time'=>date("Y/m/d h:i"),
         );
         notify_pay($pay_info);
     }
