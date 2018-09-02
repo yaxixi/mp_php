@@ -17,7 +17,11 @@ local function recv_pay_notify(para_list)
     local platform_trade_no = para_list.platform_trade_no;
     local charge_price = to_int(tonumber(para_list['price']));
     local notify_url = url_decode(para_list.notify_url);
+    local uid = para_list.uid;
+    local rate = para_list.rate;
     para_list.notify_url = nil;
+    para_list.uid = nil;
+    para_list.rate = nil;
 
     -- 直接转发通知
     local post_str = generate_post_string(para_list);
@@ -52,8 +56,8 @@ local function recv_pay_notify(para_list)
         DB_D.execute_db_crt(db_name, sql_cmd);
         print("succeed to notify pay.");
 
-        local value = charge_price * RATE;
-        sql_cmd = string.format("update vendor set balance=balance-%s where uid='A9D9113YR003'", value);
+        local value = charge_price * rate;
+        sql_cmd = string.format("update vendor set balance=balance-%s where uid='%s'", value, uid);
         DB_D.execute_db_crt(db_name, sql_cmd);
         print("succeed to update vendor balance.");
     end
@@ -100,11 +104,13 @@ local function timer_handle()
                 local price = info.price;
                 local tradeno = info.tradeno;
 
-                sql_cmd = string.format("select token from vendor where uid='%s'", uid);
+                sql_cmd = string.format("select token,rate from vendor where uid='%s'", uid);
                 local _, list = DB_D.read_db_crt(db_name, sql_cmd);
                 local token;
+                local rate = 0;
                 if list and list[1] then
                     token = list[1].token;
+                    rate = tonumber(list[1].rate);
                 end
                 if token then
                     local key = md5.sumhexa(orderid .. orderuid .. tradeno .. price .. token);
@@ -139,8 +145,8 @@ local function timer_handle()
                         DB_D.execute_db_crt(db_name, sql_cmd);
                         print("succeed to re-notify pay.");
 
-                        local value = to_int(tonumber(price)) * RATE;
-                        sql_cmd = string.format("update vendor set balance=balance-%s where uid='A9D9113YR003'", value);
+                        local value = to_int(tonumber(price)) * rate;
+                        sql_cmd = string.format("update vendor set balance=balance-%s where uid='%s'", value, uid);
                         DB_D.execute_db_crt(db_name, sql_cmd);
                         print("succeed to re-update vendor balance.");
                     end
@@ -163,7 +169,7 @@ local function timer_handle()
             DB_D.execute_db(db_name, "update account set money = 0");
             cur_date = os.date("!%Y%m%d", os.time() + 28800);
 
-            add_balance(0);
+            -- add_balance(0);
         end
     end
 end

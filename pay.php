@@ -110,7 +110,7 @@
                 $db->query("update paycode set time=0 where tradeno='$tradeno'");
 
                 $token = '';
-                $ret2 = $db->get_row("select token from vendor where uid='$uid'");
+                $ret2 = $db->get_row("select token,rate from vendor where uid='$uid'");
                 if ($ret2)
                 {
                     $token = $ret2['token'];
@@ -120,6 +120,8 @@
                     $params = array(
                         'platform_trade_no'=>$tradeno,
                         'orderid'=>$orderid,
+                        'uid'=>$uid,
+                        'rate'=>$ret2['rate'],
                         'price'=>(double)$money,
                         'notify_url'=>$notify_url,
                         'orderuid'=>$orderuid,

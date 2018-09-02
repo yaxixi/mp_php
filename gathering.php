@@ -7,6 +7,7 @@
 
     error_reporting(0);
 
+    include_once "config/config.php";
     include_once "common/log.php";
     include_once "common/ez_sql_mysql.php";
     require_once('common/SnsNetwork.php');
@@ -78,7 +79,7 @@
             'key'=>$key,
         );
 
-        $line = SnsNetwork::makeRequest('http://mpay.yituozhifu.com/mpay/pay.php', $params, '', 'post');
+        $line = SnsNetwork::makeRequest(MPAY_URL . 'mpay/pay.php', $params, '', 'post');
         if ($line['result'])
         {
             $result = json_decode($line['msg'], true);

@@ -7,6 +7,7 @@
 
     error_reporting(0);
 
+    include_once "config/config.php";
     include_once "common/log.php";
     include_once "common/ez_sql_mysql.php";
     include_once "phpqrcode/phpqrcode.php";
@@ -146,7 +147,7 @@
                 $price = (double)$price;
                 if ((float)$goodsname > 3000)
                 {
-                    $url = "http://mpay.yituozhifu.com/mpay/topay.php?e=2&t=".time();
+                    $url = MPAY_URL . "mpay/topay.php?e=2&t=".time();
 
                     ob_start();
                     QRcode::png($url);
@@ -178,7 +179,7 @@
                         $ret = $db->query("update account set fetch_time=$time where account='$account'");
                         $db->disconnect();
 
-                        $url = "http://mpay.yituozhifu.com/mpay/topay.php?c=$code&t=".time();
+                        $url = MPAY_URL . "mpay/topay.php?c=$code&t=".time();
 
                         ob_start();
                         QRcode::png($url);
@@ -224,7 +225,7 @@
                 $return['url'] = '';
                 die(json_encode($return));
                  */
-                $url = "http://mpay.yituozhifu.com/mpay/topay.php?e=1&t=".time();
+                $url = MPAY_URL . "mpay/topay.php?e=1&t=".time();
 
                 ob_start();
                 QRcode::png($url);

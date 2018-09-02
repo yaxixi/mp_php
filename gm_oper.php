@@ -100,6 +100,26 @@
         die(json_encode(array('ret'=>0,'msg'=>'OK')));
     }
 
+    function set_rate()
+    {
+        $uid = $_REQUEST["uid"];
+        $rate = $_REQUEST["rate"];
+        global $db;
+        $db->query("update vendor set rate=$rate where uid='$uid'");
+
+        die(json_encode(array('ret'=>0,'msg'=>'OK')));
+    }
+
+    function add_balance()
+    {
+        $uid = $_REQUEST["uid"];
+        $add_value = $_REQUEST["add_value"];
+        global $db;
+        $db->query("update vendor set balance=balance+$add_value, total_price=total_price+$add_value where uid='$uid'");
+
+        die(json_encode(array('ret'=>0,'msg'=>'OK')));
+    }
+
     $func = $_REQUEST["func"];
     if ($func == "switch_account_status")
         switch_account_status();
@@ -115,4 +135,8 @@
         set_max_money();
     else if ($func == 'set_account_demo')
         set_account_demo();
+    else if ($func == 'set_rate')
+        set_rate();
+    else if ($func == 'add_balance')
+        add_balance();
 ?>
